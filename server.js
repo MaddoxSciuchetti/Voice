@@ -24,11 +24,13 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Allow requests from any subdomain of replit.dev and replit.co
+    // Allow requests from any subdomain of replit.dev and replit.co and all local origins
     const allowedDomains = [
       /\.repl\.co$/,
       /\.replit\.dev$/,
-      process.env.NODE_ENV === 'development' ? /localhost/ : null
+      /localhost/,
+      /127\.0\.0\.1/,
+      /file:\/\//
     ].filter(Boolean);
     
     if (allowedDomains.some(domain => domain.test(origin))) {
