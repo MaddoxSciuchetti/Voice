@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Voice Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            color: #3498db;
+            margin-top: 0;
+            font-size: 1rem;
+        }
+        
+        #voice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            order: -1; /* Move to top */
+        }
+        
+        #voiceButton {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            z-index: 10;
+        }
+        
+        #voiceButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #voiceButton.listening {
+            background-color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 15px rgba(231, 76, 60, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+            }
+        }
+        
+        #voiceButton i {
+            color: white;
+            font-size: 40px;
+        }
+        
+        .card {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #3498db;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .assistant-info {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        #loadingStatus {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        
+        #status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        #history {
+            margin-top: 15px;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .history-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .query {
+            background-color: #e3f2fd;
+            text-align: right;
+            border-top-right-radius: 0;
+        }
+        
+        .answer {
+            background-color: #fff8e1;
+            text-align: left;
+            border-top-left-radius: 0;
+        }
+        
+        .system {
+            background-color: #f1f1f1;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .help-text {
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+        
+        /* Floating circle widget styles */
+        #floatingWidget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            animation: float 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+        
+        #floatingWidget i {
+            color: white;
+            font-size: 20px;
+        }
+        
+        #widgetPanel {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 250px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            z-index: 999;
+            transform: scale(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        #widgetPanel.active {
+            transform: scale(1);
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        
+        .widget-header h3 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .widget-close {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .widget-content {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .widget-content p {
+            font-size: 12px;
+            margin: 0 0 10px 0;
+        }
+        
+        .widget-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .widget-button {
+            background-color: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+            font-size: 12px;
+        }
+        
+        .widget-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .widget-button i {
+            margin-right: 8px;
+            color: #3498db;
+            font-size: 14px;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+            50% {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+            }
+            100% {
+                transform: translateY(0px);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Voice Assistant</h1>
+        
+        <div id="voice-container">
+            <div id="voiceButton">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <p class="help-text">Click the button to ask a question</p>
+        </div>
+        
+        <div class="card">
+            <div class="assistant-info">
+                <h3><i class="fas fa-robot"></i> Maddox's Voice Clone</h3>
+                <p>Ask me anything about Maddox's background, expertise, or availability.</p>
+                <p id="loadingStatus">Loading knowledge base...</p>
+            </div>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div id="history"></div>
+    </div>
+    
+    <footer>
+        <p>Voice Assistant | Browser-based Speech Recognition</p>
+    </footer>
+    
+    <!-- Floating circle widget -->
+    <div id="floatingWidget">
+        <i class="fas fa-robot"></i>
+    </div>
+    
+    <!-- Widget panel -->
+    <div id="widgetPanel">
+        <div class="widget-header">
+            <h3>Advanced Voice Assistant Tools</h3>
+            <button class="widget-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="widget-content">
+            <p>Quick actions for your voice assistant</p>
+            <div class="widget-actions">
+                <button class="widget-button" id="activateVoiceBtn">
+                    <i class="fas fa-microphone"></i> Activate Voice
+                </button>
+                <button class="widget-button" id="switchDocBtn">
+                    <i class="fas fa-exchange-alt"></i> Switch Knowledge Base
+                </button>
+                <button class="widget-button" id="clearHistoryBtn">
+                    <i class="fas fa-history"></i> Clear History
+                </button>
+                <button class="widget-button" id="voiceSettingsBtn">
+                    <i class="fas fa-cog"></i> Voice Settings
+                </button>
+                <button class="widget-button" id="helpBtn">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="advanced_script.js"></script>
+    <script>
+        // Current document ID
+        let currentDocumentId = 'maddox';
+        
+        // Available documents - only Maddox
+        let availableDocuments = [{
+            id: 'maddox',
+            title: 'Maddox Information'
+        }];
+        
+        // Loading status
+        const loadingStatus = document.getElementById('loadingStatus');
+        
+        // Load document content from backend
+        async function loadDocumentContent() {
+            loadingStatus.textContent = 'Loading knowledge base...';
+            
+            try {
+                // Always load Maddox.txt regardless of the document ID
+                const response = await fetch(`/api/documents/maddox`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store document content in global variable
+                    window.documentContent = data.content;
+                    
+                    // Update status with link to content page
+                    loadingStatus.innerHTML = `Ready to answer questions about Maddox. <a href="/content/maddox" target="_blank" style="font-size: 0.8em; margin-left: 10px; color: #3498db;">View Content</a>`;
+                    
+                    // Enable voice button
+                    const voiceBtn = document.getElementById('voiceButton');
+                    voiceBtn.style.opacity = 1;
+                    voiceBtn.style.pointerEvents = 'auto';
+                    
+                    // Store current document ID
+                    currentDocumentId = 'maddox';
+                    
+                    // Process document for advanced features
+                    if (typeof processDocument === 'function') {
+                        processDocument();
+                    }
+                    
+                    // Add to history
+                    addToHistory(`Loaded knowledge base: Maddox Information`, 'system');
+                    
+                    // Speak welcome message
+                    if (typeof speakResponse === 'function') {
+                        speakResponse(`I'm ready to answer questions about Maddox. Click the button and ask me anything.`);
+                    }
+                    
+                    return true;
+                } else {
+                    console.error('Failed to load Maddox content');
+                    loadingStatus.textContent = 'Failed to load knowledge base. Please try again.';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error loading Maddox content:', error);
+                loadingStatus.textContent = 'Error loading knowledge base. Please try again.';
+                return false;
+            }
+        }
+        
+        // Function to load available documents - now disabled
+        async function loadAvailableDocuments() {
+            // Only return Maddox as the single available document
+            return availableDocuments;
+        }
+        
+        // Switch document function - now disabled
+        function switchToNextDocument() {
+            // Only one document exists, so no switching is needed
+            return;
+        }
+        
+        // Floating widget functionality
+        const floatingWidget = document.getElementById('floatingWidget');
+        const widgetPanel = document.getElementById('widgetPanel');
+        const closeBtn = document.querySelector('.widget-close');
+        
+        // Widget buttons
+        const activateVoiceBtn = document.getElementById('activateVoiceBtn');
+        const switchDocBtn = document.getElementById('switchDocBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const voiceSettingsBtn = document.getElementById('voiceSettingsBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set up widget controls
+            setupWidgetControls();
+            
+            // Load Maddox.txt only
+            loadDocumentContent();
+        });
+        
+        // Toggle widget panel
+        floatingWidget.addEventListener('click', function() {
+            // Toggle panel visibility
+            widgetPanel.classList.toggle('active');
+            
+            // Toggle animation
+            if (widgetPanel.classList.contains('active')) {
+                this.style.animation = 'none';
+            } else {
+                setTimeout(() => {
+                    this.style.animation = 'float 3s ease-in-out infinite';
+                }, 10);
+            }
+        });
+        
+        // Close panel
+        closeBtn.addEventListener('click', function() {
+            widgetPanel.classList.remove('active');
+            setTimeout(() => {
+                floatingWidget.style.animation = 'float 3s ease-in-out infinite';
+            }, 10);
+        });
+        
+        // Activate voice button
+        activateVoiceBtn.addEventListener('click', function() {
+            document.getElementById('voiceButton').click();
+            widgetPanel.classList.remove('active');
+        });
+        
+        // Switch document button
+        switchDocBtn.addEventListener('click', function() {
+            switchToNextDocument();
+            widgetPanel.classList.remove('active');
+        });
+        
+        // Clear history button
+        clearHistoryBtn.addEventListener('click', function() {
+            const historyDiv = document.getElementById('history');
+            if (historyDiv) {
+                historyDiv.innerHTML = '';
+            }
+            widgetPanel.classList.remove('active');
+        });
+        
+        // Voice settings button
+        voiceSettingsBtn.addEventListener('click', function() {
+            if (typeof showVoiceSettings === 'function') {
+                showVoiceSettings();
+            } else {
+                alert('Voice settings are not available in this version.');
+            }
+            widgetPanel.classList.remove('active');
+        });
+        
+        // Help button
+        helpBtn.addEventListener('click', function() {
+            alert('Advanced Voice Assistant Help:\n\n1. Click the microphone button\n2. Ask a question about Maddox\n3. Listen to the response\n\nYou can also:\n- Switch between different knowledge bases\n- View your conversation history\n- Change voice settings\n- Clear conversation history');
+            widgetPanel.classList.remove('active');
+        });
+        
+        // Add to chat history
+        function addToHistory(text, type) {
+            const historyDiv = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = `history-item ${type}`;
+            item.textContent = text;
+            historyDiv.appendChild(item);
+            
+            // Scroll to bottom
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+        
+        // Override showStatus to also add to history
+        const originalShowStatus = window.showStatus;
+        window.showStatus = function(message, type) {
+            if (originalShowStatus) {
+                originalShowStatus(message, type);
+            }
+            
+            if (type === 'query') {
+                addToHistory(message.replace('You said: ', ''), 'query');
+            } else if (type === 'answer') {
+                addToHistory(message.replace('Answer: ', ''), 'answer');
+            }
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+You are responsible for creating a voice clone of myself, meaning that the voice clone speaks in the I perspective
+The voice clone answers based on information found in the maddox-content.html file
+Integrate structured outputs with a .json file so that the model does not hallucinate
+Make sure that the model only uses one elevenlabs voice
+The fallback voice should be the simple tts this is correct
+Stopy creating random .json files. Stick to the json files that I have and make sure to only use them
+Make sure to onnly use the voice with the following id: TnVT7p6RBpw3AtQyx4cd 
+All other voiuces shoudl be directly deleted
