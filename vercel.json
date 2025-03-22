@@ -4,9 +4,18 @@
     { "src": "server.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/server.js" }
+    { 
+      "src": "/(.*)", 
+      "dest": "/server.js",
+      "methods": ["GET", "POST", "OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+      }
+    }
   ],
   "env": {
-    "ELEVEN_LABS_VOICE_ID": "TnVT7p6RBpw3AtQyx4cd"
+    "ELEVEN_LABS_VOICE_ID": "TnVT7p6RBpw3AtQyx4cd",
+    "NODE_ENV": "production"
   }
 } 

@@ -30,7 +30,8 @@ const corsOptions = {
       /\.replit\.dev$/,
       /localhost/,
       /127\.0\.0\.1/,
-      /file:\/\//
+      /file:\/\//,
+      /vercel\.app/  // Add Vercel domains
     ].filter(Boolean);
     
     if (allowedDomains.some(domain => domain.test(origin))) {
@@ -46,7 +47,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Serve static files
+// Serve static files from the public directory for Vercel
+app.use(express.static(path.join(__dirname, 'public')));
+// Also serve files from root for backward compatibility
 app.use(express.static(path.join(__dirname)));
 
 // Parse JSON in requests with increased limit for larger payloads
@@ -470,9 +473,14 @@ app.get('/api/voice', (req, res) => {
   }
 });
 
-// Start the server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`For Replit: Check the 'Webview' tab or your deployment URL`);
-  console.log(`ElevenLabs API key configured: ${!!process.env.ELEVEN_LABS_API_KEY}`);
-}); 
+// Only start the server if we're not on Vercel (development environment)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`For Replit: Check the 'Webview' tab or your deployment URL`);
+    console.log(`ElevenLabs API key configured: ${!!process.env.ELEVEN_LABS_API_KEY}`);
+  });
+}
+
+// Export the app for Vercel serverless deployment
+module.exports = app; 
