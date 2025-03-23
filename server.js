@@ -6,7 +6,7 @@ const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5001;
 const OpenAI = require('openai');
 
 // Queue for ElevenLabs requests
@@ -470,6 +470,132 @@ app.get('/api/voice', (req, res) => {
   } catch (error) {
     console.error('Error getting voice info:', error);
     res.status(500).json(apiResponse(false, null, 'Failed to get voice information', 500));
+  }
+});
+
+// Direct implementation of voice API endpoints without RAG
+app.post('/api/voice/generate-response', async (req, res) => {
+  try {
+    const { query } = req.body;
+    
+    if (!query) {
+      return res.status(400).json(apiResponse(false, null, 'Query is required'));
+    }
+    
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json(apiResponse(false, null, 'OpenAI API key not configured'));
+    }
+    
+    try {
+      // Simple direct OpenAI call without RAG
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Maddox, a helpful AI assistant. Answer questions briefly and conversationally in the first person without referencing any external documents.'
+            },
+            {
+              role: 'user',
+              content: query
+            }
+          ],
+          max_tokens: 150
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
+        return res.status(response.status).json(
+          apiResponse(false, null, `OpenAI API error: ${errorData.error?.message || 'Unknown error'}`)
+        );
+      }
+      
+      const data = await response.json();
+      const generatedText = data.choices[0]?.message?.content || '';
+      
+      res.json(apiResponse(true, { response: generatedText }));
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      res.status(500).json(apiResponse(false, null, 'Failed to generate AI response'));
+    }
+  } catch (error) {
+    console.error('Error in voice generate-response:', error);
+    res.status(500).json(apiResponse(false, null, 'Internal server error'));
+  }
+});
+
+// Add a direct voice API health endpoint
+app.get('/api/voice/health', (req, res) => {
+  res.json(apiResponse(true, { status: 'healthy' }));
+});
+
+// Add a direct TTS endpoint
+app.post('/api/voice/tts', async (req, res) => {
+  try {
+    const { text, voiceId = process.env.ELEVEN_LABS_VOICE_ID } = req.body;
+    
+    if (!text) {
+      return res.status(400).json(apiResponse(false, null, 'Text is required'));
+    }
+    
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      // Return a specific error that indicates ElevenLabs is not configured
+      // The client will use this to fall back to browser TTS
+      return res.status(200).json(apiResponse(false, null, 'ELEVENLABS_NOT_CONFIGURED'));
+    }
+    
+    try {
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'xi-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: 'eleven_monolingual_v1',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.75,
+            }
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('ElevenLabs API error:', errorData);
+        return res.status(200).json(
+          apiResponse(false, null, `ELEVENLABS_ERROR`)
+        );
+      }
+      
+      const audioBuffer = await response.arrayBuffer();
+      const audioBase64 = Buffer.from(audioBuffer).toString('base64');
+      
+      res.json(apiResponse(true, {
+        audioContent: audioBase64,
+        format: 'mp3'
+      }));
+    } catch (error) {
+      console.error('Error generating speech:', error);
+      res.status(200).json(apiResponse(false, null, 'ELEVENLABS_ERROR'));
+    }
+  } catch (error) {
+    console.error('Error in voice TTS:', error);
+    res.status(200).json(apiResponse(false, null, 'INTERNAL_ERROR'));
   }
 });
 
