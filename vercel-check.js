@@ -125,7 +125,7 @@ function checkConfig() {
 function checkApi() {
   console.log('\nChecking local API...');
   
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 8080;
   
   // Check if server is running
   const req = require('http').request({

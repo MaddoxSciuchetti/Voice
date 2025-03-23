@@ -6,7 +6,7 @@ const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const OpenAI = require('openai');
 
 // Queue for ElevenLabs requests

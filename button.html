@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Voice Assistant</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #EEF2FF;
+        }
+
+        .open-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #4F46E5, #4338CA);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .open-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <button class="open-button" onclick="openVoiceAssistant()">Click Here</button>
+
+    <script>
+        function openVoiceAssistant() {
+            // Calculate center position for the popup
+            const width = 800;
+            const height = 600;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+
+            // Open the voice assistant in a popup
+            window.open('index.html', 'MaddoxVoice', 
+                `width=${width},
+                height=${height},
+                left=${left},
+                top=${top},
+                popup=yes,
+                scrollbars=no,
+                resizable=no,
+                location=no,
+                menubar=no,
+                toolbar=no,
+                status=no`
+            );
+        }
+    </script>
+</body>
+</html> 

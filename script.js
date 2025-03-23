@@ -877,38 +877,51 @@ async function speakWithElevenLabs(text, context = '') {
             currentAudio = null;
             
             if (playError.name === 'NotAllowedError') {
-                // Create a play button for user interaction
-                const playButton = document.createElement('button');
-                playButton.textContent = 'Play Response';
-                playButton.style.padding = '8px 16px';
-                playButton.style.backgroundColor = '#3498db';
-                playButton.style.color = 'white';
-                playButton.style.border = 'none';
-                playButton.style.borderRadius = '4px';
-                playButton.style.cursor = 'pointer';
-                playButton.style.margin = '10px auto';
-                playButton.style.display = 'block';
-                
-                // Add click handler
-                playButton.onclick = async () => {
+                // Instead of showing a button, try to play automatically
+                console.log('Attempting automatic playback after a short delay...');
+                // Add automated retry mechanism
+                setTimeout(async () => {
                     try {
                         currentAudio = audio;
                         await audio.play();
                         isSpeaking = true;
-                        playButton.remove();
-                    } catch (err) {
-                        console.error('Still cannot play audio:', err);
-                        currentAudio = null;
-                        isSpeaking = false;
-                        showStatus(`Cannot play audio: ${err.message}. Try refreshing the page.`, 'error');
+                    } catch (retryError) {
+                        console.error('Automatic playback retry failed:', retryError);
+                        
+                        // If automatic retry fails, create a play button with less visual prominence
+                        const playButton = document.createElement('button');
+                        playButton.textContent = 'Play Response';
+                        playButton.style.padding = '8px 16px';
+                        playButton.style.backgroundColor = '#3498db';
+                        playButton.style.color = 'white';
+                        playButton.style.border = 'none';
+                        playButton.style.borderRadius = '4px';
+                        playButton.style.cursor = 'pointer';
+                        playButton.style.margin = '10px auto';
+                        playButton.style.display = 'block';
+                        
+                        // Add click handler
+                        playButton.onclick = async () => {
+                            try {
+                                currentAudio = audio;
+                                await audio.play();
+                                isSpeaking = true;
+                                playButton.remove();
+                            } catch (err) {
+                                console.error('Still cannot play audio:', err);
+                                currentAudio = null;
+                                isSpeaking = false;
+                                showStatus(`Cannot play audio: ${err.message}. Try refreshing the page.`, 'error');
+                            }
+                        };
+                        
+                        // Add to status div
+                        if (statusDiv) {
+                            statusDiv.innerHTML = `Answer: ${enhancedText}<br>`;
+                            statusDiv.appendChild(playButton);
+                        }
                     }
-                };
-                
-                // Add to status div
-                if (statusDiv) {
-                    statusDiv.innerHTML = `Answer: ${enhancedText}<br>`;
-                    statusDiv.appendChild(playButton);
-                }
+                }, 500); // 500ms delay before retry
             } else {
                 throw playError;
             }
